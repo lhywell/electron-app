@@ -76,6 +76,36 @@ yarn electron:build
 
 打包后的应用输出到 `release` 目录
 
+## 使用方法
+
+1. 推送到 GitHub
+
+```bash
+git add .github/workflows/build.yml
+git commit -m "Add GitHub Actions for cross-platform build"
+git push
+```
+
+2. 触发构建
+
+- 方式一：手动触发
+  进入 GitHub 仓库 → Actions 标签
+  选择 "Build Electron App" → Run workflow
+
+- 方式二：打标签自动触发
+  git tag v1.0.0
+  git push origin v1.0.0
+
+3. 获取构建产物
+   构建完成后，在 Actions 页面下载 artifacts
+   或自动发布到 GitHub Releases（如果打了标签）
+
+配置说明
+| 平台 | Runner | 输出 |
+|------|--------|------|
+| macOS | macos-latest | .dmg 文件 |
+| Windows | windows-latest | .exe 文件 |
+
 ## 环境变量
 
 项目支持多环境配置：

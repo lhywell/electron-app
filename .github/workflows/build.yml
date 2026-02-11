@@ -1,0 +1,94 @@
+name: Build Electron App
+
+on:
+  # 手动触发
+  workflow_dispatch:
+  
+  # 推送标签时自动触发（如 v1.0.0）
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # macOS 构建
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build macOS App
+        run: yarn electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-Build
+          path: release/*.dmg
+
+  # Windows 构建
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Windows App
+        run: yarn electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Build
+          path: release/*.exe
+
+  # 发布到 GitHub Releases（可选）
+  release:
+    needs: [build-mac, build-win]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download macOS Build
+        uses: actions/download-artifact@v4
+        with:
+          name: macOS-Build
+          path: release/mac
+
+      - name: Download Windows Build
+        uses: actions/download-artifact@v4
+        with:
+          name: Windows-Build
+          path: release/win
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/mac/*.dmg
+            release/win/*.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
